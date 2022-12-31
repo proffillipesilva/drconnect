@@ -5,6 +5,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -13,7 +14,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @Entity
 @Table(name = "consulta")
-public class Consulta implements Serializable {
+public class Appointment implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +22,15 @@ public class Consulta implements Serializable {
 
     private Integer id;
     /*Adicionar chaves estrangeiras (id paciente e medico)*/
-    private String hora_consulta;
-    private String data_consulta;
-    private String valor_consulta;
+    private Date startTime;
+    private Date endTime;
+    private Double price;
+    private String title;
+    private String description;
+
+    @ManyToOne
+    private Doctor doctor;
+
+    @ManyToOne
+    private Patient patient;
 }

@@ -1,10 +1,11 @@
 package com.fiec.DrConnect.Configuration;
 
-import com.fiec.DrConnect.models.entities.Paciente;
 import com.fiec.DrConnect.models.entities.User;
 import com.fiec.DrConnect.Utils.JwtTokenUtil;
-import com.fiec.DrConnect.models.repositories.MedicoRepository;
-import com.fiec.DrConnect.models.repositories.PacienteRepository;
+import com.fiec.DrConnect.models.enums.UserRole;
+import com.fiec.DrConnect.models.repositories.DoctorRepository;
+import com.fiec.DrConnect.models.repositories.PatientRepository;
+import com.fiec.DrConnect.models.repositories.UserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,16 +19,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-
     @Autowired
-    private PacienteRepository pacienteRepository;
-
-    @Autowired
-    private MedicoRepository medicoRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -40,23 +39,23 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         // JWT Token is in the form "Bearer token". Remove Bearer word and get
         // only the Token
 
-        if (requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
+        List<String> excludedUrls = Arrays.asList("/auth/signIn");
+
+        // JWT Token is in the form "Bearer token". Remove Bearer word and get
+        // only the Token
+        String pathUri = request.getRequestURI();
+        if (!excludedUrls.contains(pathUri) && requestTokenHeader != null && requestTokenHeader.startsWith("Bearer ")) {
+
             jwtToken = requestTokenHeader.substring(7);
-
-
-/*
-            FirebaseAuth auth = FirebaseAuth.getInstance();
-            FirebaseToken token = auth.verifyIdToken(jwtToken);
-
-            String email = token.getEmail();
- */
             try {
                 email = jwtTokenUtil.getUsernameFromToken(jwtToken);
+                UserRole userRole = jwtTokenUtil.getRoleFromToken(jwtToken);
 
-                Paciente paciente = pacienteRepository.findByEmail(email).orElseThrow();
+                User user = userRepository.findUserByEmail(email).orElseThrow();
+                user.setRole(userRole);
 
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                        paciente, null, paciente.getAuthorities());
+                        user, null, user.getAuthorities());
                 usernamePasswordAuthenticationToken
                         .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 // After setting the Authentication in the context, we specify
@@ -72,6 +71,4 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-
-    //Bearer eyahaldaldjlajdlkajdlajlkjdlkajakldjlkdajldkalkjajhe
 }

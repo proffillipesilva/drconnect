@@ -1,5 +1,7 @@
 package com.fiec.DrConnect.Utils;
 
+import com.fiec.DrConnect.models.entities.User;
+import com.fiec.DrConnect.models.enums.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -41,9 +43,15 @@ public class JwtTokenUtil implements Serializable {
         return expiration.before(new Date());
     }
     //generate token for user
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(User user, UserRole userRole) {
         Map<String, Object> claims = new HashMap<>();
-        return doGenerateToken(claims, userDetails.getUsername());
+        claims.put("ROLE", userRole);
+        return doGenerateToken(claims, user.getUsername());
+    }
+
+    public UserRole getRoleFromToken(String token){
+        Claims claims = getAllClaimsFromToken(token);
+        return (UserRole) claims.get("ROLE");
     }
     //while creating the token -
     //1. Define  claims of the token, like Issuer, Expiration, Subject, and the ID
